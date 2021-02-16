@@ -107,6 +107,13 @@ function getHtmlCssXblockHelper() {
     return editor;
   }
 
+  function setIframeContent(element, code) {
+    element.attr(
+      "src",
+      `data:text/html;charset=utf-8,${encodeURIComponent(code)}`
+    );
+  }
+
   return {
     replaceNewLines,
     formatOutputDiff,
@@ -114,5 +121,6 @@ function getHtmlCssXblockHelper() {
     truncateResponse,
     handleEditorResponse,
     getCodeEditor,
+    setIframeContent,
   };
 }

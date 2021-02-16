@@ -154,7 +154,7 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
         scope=Scope.content,
         help=
         "Modo de avaliação. Grader implica implementar código NodeJS que verifique o código dos alunos.",
-        values=('grader'))
+        values=('grader', ))
 
     partial_grading = Boolean(
         display_name="partial_grading",

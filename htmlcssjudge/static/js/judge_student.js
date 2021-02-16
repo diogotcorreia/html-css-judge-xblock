@@ -69,10 +69,10 @@ function HtmlCssJudgeXBlock(runtime, element, context) {
       $.post(handlerUrl, "{}").done(function (response) {
         if (response.result === "success") {
           view_model_answer_editor.setValue(response.model_answer);
-          $(`#model_code_preview_${id} iframe`)
-            .contents()
-            .find("html")
-            .html(response.model_answer);
+          helpers.setIframeContent(
+            $(`#model_code_preview_${id} iframe`),
+            response.model_answer
+          );
         } else view_model_answer_editor.setValue(response.message);
       });
     });
@@ -97,10 +97,10 @@ function HtmlCssJudgeXBlock(runtime, element, context) {
           .find("#view_code_student_name_" + id)
           .text(row.data("fullname"));
         view_submission_editor.setValue(row.data("student_code"));
-        view_submission_editor_preview
-          .contents()
-          .find("html")
-          .html(row.data("student_code"));
+        helpers.setIframeContent(
+          view_submission_editor_preview,
+          row.data("student_code")
+        );
         helpers.handleEditorResponse(
           row.data("evaluation"),
           $("#view_code_feedback_" + id)
@@ -205,8 +205,7 @@ function HtmlCssJudgeXBlock(runtime, element, context) {
 
   // refresh preview
   const refreshPreview = (code) => {
-    console.log(code);
-    $(`#student_code_preview_${id} iframe`).contents().find("html").html(code);
+    helpers.setIframeContent($(`#student_code_preview_${id} iframe`), code);
   };
   let previewTimeoutId;
   editor.on("change", () => {
