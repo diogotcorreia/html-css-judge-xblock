@@ -19,8 +19,9 @@ loader = ResourceLoader(__name__)
 
 ITEM_TYPE = "htmlcssjudge"
 
-epicbox.configure(
-    profiles=[epicbox.Profile('node', 'node:14.15.5-alpine3.13')])
+epicbox.configure(profiles=[
+    epicbox.Profile('node', 'node:14.15.5-alpine3.13', network_disabled=False)
+])
 limits = {'cputime': 1, 'memory': 64}
 
 
@@ -56,6 +57,7 @@ def add_styling_and_editor(frag):
 
 grader_code_def = str(
     b"""const cheerio = require('cheerio');
+const assert = require('assert');
 const fs = require('fs');
 const $ = cheerio.load(fs.readFileSync(0, 'utf-8')); // Read from stdin
 
@@ -332,7 +334,10 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
             # Install cheerio library
             epicbox.run('node',
                         'npm install cheerio',
-                        limits=limits,
+                        limits={
+                            'cputime': 10,
+                            'memory': 1000
+                        },
                         workdir=workdir)
 
             result = epicbox.run('node',
@@ -344,6 +349,7 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
                                      'content':
                                      bytes(self.grader_code, 'utf-8')
                                  }],
+                                 limits=limits,
                                  workdir=workdir)
 
             stdout = clean_stdout(result["stdout"])
