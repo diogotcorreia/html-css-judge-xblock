@@ -57,23 +57,38 @@ def add_styling_and_editor(frag):
 
 
 grader_helper_code = str(
-    b"""const cheerio = require('cheerio');
-const assert = require("assert");
-const fs = require('fs');
-const grader = require('./grader');
-const code = fs.readFileSync(0, 'utf-8')
+    b"""const cheerio = require("cheerio");
+const fs = require("fs");
+const grader = require("./grader");
+const code = fs.readFileSync(0, "utf-8");
 const $ = cheerio.load(code);
 
-grader({$, assert, studentCode: code, cheerio});
+let testCount = 0;
+let errors = [];
+
+const assertDaFeira = (truthy, message = "Erro desconhecido num teste") => {
+    testCount++;
+    if (!truthy) errors.push(message);
+};
+
+grader({ $, assert: assertDaFeira, studentCode: code, cheerio });
+
+console.log(
+    JSON.stringify({
+        testCount,
+        testsPassed: testCount - errors.length,
+        errors,
+    })
+);
 """, 'utf-8')
 
 grader_code_def = str(
-    b"""const cheerio = require('cheerio');
-const assert = require('assert');
-const fs = require('fs');
-const $ = cheerio.load(fs.readFileSync(0, 'utf-8')); // Read from stdin
-
-assert($('p').text() === "Hello!", "Not hello :(");
+    b"""module.exports = ({ $, assert, studentCode, cheerio }) => {
+    assert(
+        $('p').text().match(/^\s*Hello!\s*$/gi),
+        'Not hello :('
+    );
+};
 """, 'utf-8')
 
 initial_code_def = str(
@@ -215,7 +230,7 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
                 'initial_code': self.initial_code,
                 'model_answer': self.model_answer,
                 'grader_code': self.grader_code,
-                'uses_grader': self.grade_mode != 'input/output',
+                'uses_grader': True,
                 'xblock_id': self._get_xblock_loc(),
                 'no_submission': self.no_submission
             })
@@ -225,7 +240,7 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
         frag.initialize_js(
             'HtmlCssJudgeXBlock', {
                 'xblock_id': self._get_xblock_loc(),
-                'uses_grader': self.grade_mode != 'input/output',
+                'uses_grader': True,
                 'no_submission': self.no_submission
             })
         return frag
@@ -371,14 +386,41 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
             if not test:
                 self.emit_completion(0.0)
             return
-        # completion interface
-        if not test:
-            self.emit_completion(1.0)
-        self.save_output({
-            'result': 'success',
-            'message': 'O teu programa passou em todos os testes.',
-            'score': 1.0
-        })
+        try:
+            test_result = json.loads(stdout)
+            # completion interface
+
+            points = test_result['testsPassed'] / test_result['testCount']
+
+            if not test:
+                self.emit_completion(round(points, 2))
+            if points == 1.0:
+                self.save_output({
+                    'result': 'success',
+                    'message': 'O teu programa passou em todos os testes.',
+                    'score': 1.0
+                })
+            else:
+                self.save_output({
+                    'result': 'fail',
+                    'tests_failed': test_result['errors'],
+                    'percentage': round(points * 100, 1)
+                })
+        except ValueError:
+            self.save_output({
+                'result':
+                'error',
+                'exit_code':
+                0,
+                'input':
+                self.student_code,
+                'stdout':
+                stdout,
+                'stderr':
+                'Ocorreu um erro ao interpretar o resultado dos testes.'
+            })
+            if not test:
+                self.emit_completion(0.0)
 
     def save_output(self, output):
         """

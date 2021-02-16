@@ -18,11 +18,12 @@
         <div id="grader_code_{{xblock_id}}">{{grader_code}}</div>
       </div>
       <span class="tip setting-help"
-        >O grader para este problema (grader.py). Deverá chamar uma função do
-        código do aluno (que está no ficheiro main.py) e imprimir para o stdout
-        o que deverá ser comparado com a output do caso de teste (pode ser algo
-        dinâmico). Para problemas em que os alunos utilizem stdin/out, façam a
-        chamada para a função deles com o gutils.NoStd</span
+        >O grader para este problema (grader.js). Deverá implementar uma função
+        que recebe como argumento um objeto com $ (objeto do cheerio; funciona
+        como jQuery), assert (usado para os testes), studentCode (o código do
+        aluno sem nenhum processamento) e a library cheerio. A função é chamada
+        automaticamente e o número de testes é igual ao número de chamadas à
+        função assert.</span
       >
     </li>
     {% endif %} {% if not no_submission %}
@@ -38,7 +39,7 @@
     </li>
     {% endif %}
   </ul>
-  <div class="xblock-actions pyjudge-actions">
+  <div class="xblock-actions judge-actions">
     <ul class="action">
       <li class="action-item">
         <button

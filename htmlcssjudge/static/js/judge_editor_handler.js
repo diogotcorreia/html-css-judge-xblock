@@ -44,6 +44,12 @@ function getHtmlCssXblockHelper() {
     if (response.stdout) response.stdout = truncate(response.stdout);
   }
 
+  function escapeHtml(str) {
+    return replaceNewLines(
+      str.replace(/[^&<>]/g, (e) => `&#${e.charCodeAt(0)};`)
+    );
+  }
+
   function handleEditorResponse(response, feedbackElement, cb) {
     truncateResponse(response);
     if (response.result === "success") {
@@ -51,10 +57,21 @@ function getHtmlCssXblockHelper() {
         '<i aria-hidden="true" class="fa fa-check" style="color:green"></i> ' +
           response.message
       );
+    } else if (response.result === "fail") {
+      feedbackElement.html(
+        `<span aria-hidden="true" class="fa fa-times" style="color:darkred"></span> <b><u>O teu programa passou em ${
+          response.percentage
+        }% dos testes</u></b><br/>
+        <b>Os seguintes testes falharam:</b>
+        <ul>
+        ${response.tests_failed
+          .map((v) => `<li>${escapeHtml(v)}</li>`)
+          .join("")}
+        </ul>`
+      );
     } else {
       feedbackElement.html(
-        `<span aria-hidden="true" class="fa fa-times" style="color:darkred"></span> <b><u>Erro no caso de teste</u></b>
-        ${replaceNewLines(response.stderr)}`
+        `<span aria-hidden="true" class="fa fa-times" style="color:darkred"></span> <b><u>Ocorreu um erro no avaliador :(</u></b>`
       );
     }
     // noinspection EqualityComparisonWithCoercionJS
