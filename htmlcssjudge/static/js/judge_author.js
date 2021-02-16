@@ -1,12 +1,18 @@
 function HtmlCssJudgeXBlock(runtime, element, context) {
+  const helpers = getHtmlCssXblockHelper();
   let id = context.xblock_id;
 
-  let editor_initial = getCodeEditor("initial_code_" + id);
+  let editor_initial = helpers.getCodeEditor("initial_code_" + id);
   let editor_model_answer;
   if (!context.no_submission)
-    editor_model_answer = getCodeEditor("model_answer_" + id);
+    editor_model_answer = helpers.getCodeEditor("model_answer_" + id);
   let editor_grader;
-  if (context.uses_grader) editor_grader = getCodeEditor("grader_code_" + id);
+  if (context.uses_grader)
+    editor_grader = helpers.getCodeEditor(
+      "grader_code_" + id,
+      false,
+      "javascript"
+    );
 
   // save settings
   function save_settings(cb) {
@@ -50,7 +56,10 @@ function HtmlCssJudgeXBlock(runtime, element, context) {
         const handlerUrl = runtime.handlerUrl(element, "test_model_solution");
         $.post(handlerUrl, JSON.stringify(data)).done((response) => {
           $(this).prop("disabled", false);
-          handleEditorResponse(response, $("#code-feedback" + "_" + id));
+          helpers.handleEditorResponse(
+            response,
+            $("#code-feedback" + "_" + id)
+          );
         });
       });
     });

@@ -19,9 +19,7 @@ loader = ResourceLoader(__name__)
 
 ITEM_TYPE = "htmlcssjudge"
 
-epicbox.configure(profiles=[
-    epicbox.Profile('node', 'node:14.15.5-alpine3.13', network_disabled=False)
-])
+epicbox.configure(profiles=[epicbox.Profile('node', 'htmlcssjudge:latest')])
 limits = {'cputime': 1, 'memory': 64}
 
 
@@ -49,11 +47,25 @@ def add_styling_and_editor(frag):
     frag.add_css(resource_string("static/css/judge.css"))
     frag.add_javascript(resource_string("static/js/ace/ace.js"))
     frag.add_javascript(resource_string("static/js/ace/mode-html.js"))
+    frag.add_javascript(resource_string("static/js/ace/mode-javascript.js"))
     frag.add_javascript(resource_string("static/js/ace/theme-monokai.js"))
     frag.add_javascript(resource_string("static/js/ace/ext-language_tools.js"))
     frag.add_javascript(resource_string("static/js/ace/snippets/html.js"))
+    frag.add_javascript(
+        resource_string("static/js/ace/snippets/javascript.js"))
     frag.add_javascript(resource_string("static/js/judge_editor_handler.js"))
 
+
+grader_helper_code = str(
+    b"""const cheerio = require('cheerio');
+const assert = require("assert");
+const fs = require('fs');
+const grader = require('./grader');
+const code = fs.readFileSync(0, 'utf-8')
+const $ = cheerio.load(code);
+
+grader({$, assert, studentCode: code, cheerio});
+""", 'utf-8')
 
 grader_code_def = str(
     b"""const cheerio = require('cheerio');
@@ -330,43 +342,35 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
             }
         self.student_score = 0
 
-        with epicbox.working_directory() as workdir:
-            # Install cheerio library
-            epicbox.run('node',
-                        'npm install cheerio',
-                        limits={
-                            'cputime': 10,
-                            'memory': 1000
-                        },
-                        workdir=workdir)
+        result = epicbox.run('node',
+                             'node utils.js',
+                             stdin=self.student_code,
+                             files=[{
+                                 'name': 'grader.js',
+                                 'content': bytes(self.grader_code, 'utf-8')
+                             }, {
+                                 'name':
+                                 'utils.js',
+                                 'content':
+                                 bytes(grader_helper_code, 'utf-8')
+                             }],
+                             limits=limits)
 
-            result = epicbox.run('node',
-                                 'node grader.js',
-                                 stdin=self.student_code,
-                                 files=[{
-                                     'name':
-                                     'grader.js',
-                                     'content':
-                                     bytes(self.grader_code, 'utf-8')
-                                 }],
-                                 limits=limits,
-                                 workdir=workdir)
-
-            stdout = clean_stdout(result["stdout"])
-            stderr = clean_stdout(result["stderr"])
-            response = {
-                'result': 'error',
-                'exit_code': result["exit_code"],
-                'input': self.student_code,
-                'student_output': stdout,
-                'stderr': stderr
-            }
-            if (result["exit_code"] != 0):
-                self.save_output(response)
-                # completion interface
-                if not test:
-                    self.emit_completion(0.0)
-                return
+        stdout = clean_stdout(result["stdout"])
+        stderr = clean_stdout(result["stderr"])
+        response = {
+            'result': 'error',
+            'exit_code': result["exit_code"],
+            'input': self.student_code,
+            'student_output': stdout,
+            'stderr': stderr
+        }
+        if (result["exit_code"] != 0):
+            self.save_output(response)
+            # completion interface
+            if not test:
+                self.emit_completion(0.0)
+            return
         # completion interface
         if not test:
             self.emit_completion(1.0)

@@ -53,7 +53,8 @@ function getHtmlCssXblockHelper() {
       );
     } else {
       feedbackElement.html(
-        '<span aria-hidden="true" class="fa fa-times" style="color:darkred"></span> <b><u>Erro no caso de teste</u></b>'
+        `<span aria-hidden="true" class="fa fa-times" style="color:darkred"></span> <b><u>Erro no caso de teste</u></b>
+        ${replaceNewLines(response.stderr)}`
       );
     }
     // noinspection EqualityComparisonWithCoercionJS
@@ -61,7 +62,7 @@ function getHtmlCssXblockHelper() {
       cb();
   }
 
-  function getCodeEditor(element, readOnly = false) {
+  function getCodeEditor(element, readOnly = false, language = "html") {
     let editor = ace.edit(element);
     editor.setOptions({
       maxLines: 50,
@@ -69,7 +70,7 @@ function getHtmlCssXblockHelper() {
       autoScrollEditorIntoView: true,
       theme: "ace/theme/monokai",
       showPrintMargin: false,
-      mode: "ace/mode/html",
+      mode: `ace/mode/${language}`,
       fontSize: "14pt",
       enableBasicAutocompletion: true,
       enableSnippets: true,
