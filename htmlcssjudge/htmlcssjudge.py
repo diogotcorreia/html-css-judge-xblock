@@ -390,11 +390,12 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
             test_result = json.loads(stdout)
             # completion interface
 
-            points = test_result['testsPassed'] / test_result['testCount']
+            self.student_score = test_result['testsPassed'] / test_result[
+                'testCount']
 
             if not test:
-                self.emit_completion(round(points, 2))
-            if points == 1.0:
+                self.emit_completion(round(self.student_score, 2))
+            if self.student_score == 1.0:
                 self.save_output({
                     'result': 'success',
                     'message': 'O teu programa passou em todos os testes.',
@@ -402,9 +403,12 @@ class HtmlCssJudgeXBlock(XBlock, ScorableXBlockMixin, CompletableXBlockMixin,
                 })
             else:
                 self.save_output({
-                    'result': 'fail',
-                    'tests_failed': test_result['errors'],
-                    'percentage': round(points * 100, 1)
+                    'result':
+                    'fail',
+                    'tests_failed':
+                    test_result['errors'],
+                    'percentage':
+                    round(self.student_score * 100, 1)
                 })
         except ValueError:
             self.save_output({
