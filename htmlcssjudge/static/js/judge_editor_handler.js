@@ -108,6 +108,7 @@ function getHtmlCssXblockHelper() {
   }
 
   function setIframeContent(element, code) {
+    code = code.replace(/<script[\s\S]*(\/>|>[\s\S]*?<\/script\s*>)/g, "");
     element.attr(
       "src",
       `data:text/html;charset=utf-8,${encodeURIComponent(code)}`
