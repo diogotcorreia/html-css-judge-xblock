@@ -1,4 +1,10 @@
 function getHtmlCssXblockHelper() {
+  // jquery doesn't like script tags, so we have to use unicode
+  const scriptRegex = new RegExp(
+    "\\u003cscript[\\s\\S]*(\\/>|>[\\s\\S]*?\\u003c\\/script\\s*>)",
+    "ig"
+  );
+
   function replaceNewLines(str) {
     return str.replace(/(?:\r\n|\r|\n)/g, "<br>");
   }
@@ -108,7 +114,7 @@ function getHtmlCssXblockHelper() {
   }
 
   function setIframeContent(element, code) {
-    code = code.replace(/<script[\s\S]*(\/>|>[\s\S]*?<\/script\s*>)/g, "");
+    code = code.replace(scriptRegex, "");
     element.attr(
       "src",
       `data:text/html;charset=utf-8,${encodeURIComponent(code)}`

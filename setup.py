@@ -22,7 +22,7 @@ def package_data(pkg, roots):
 
 setup(
     name='html-css-judge-xblock',
-    version='1.0.0',
+    version='1.0.1',
     description='An OpenEdx XBlock that evaluates HTML and CSS code',
     packages=[
         'htmlcssjudge',
